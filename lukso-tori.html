@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TORI · LUKSO</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Zen+Antique&family=Noto+Serif+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky1: #fde8c8;
+    --sky2: #f9c5a0;
+    --sky3: #f4a57a;
+    --ink: #1a0f0a;
+    --gold: #c8860a;
+    --crimson: #8b1a1a;
+    --bamboo: #4a7c3f;
+    --bamboo-dark: #2d5228;
+    --bamboo-light: #6fa665;
+    --cloud: rgba(255,250,245,0.85);
+    --muted: #7a5c40;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: #1a0f0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 16px 0 20px;
+    font-family: 'Noto Serif JP', serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px 12px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo {
+    font-family: 'Zen Antique', serif;
+    font-size: 1.4rem;
+    color: var(--sky1);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 20px rgba(253,232,200,0.4);
+    line-height: 1.1;
+  }
+
+  .logo-sub {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 0.45rem;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    display: block;
+    margin-top: 2px;
+    font-weight: 300;
+  }
+
+  .hud {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .hud-item {
+    text-align: center;
+  }
+
+  .hud-label {
+    font-size: 0.42rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    display: block;
+    font-weight: 300;
+  }
+
+  .hud-val {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.1rem;
+    color: var(--sky1);
+    font-weight: 700;
+    display: block;
+    text-shadow: 0 0 10px rgba(200,134,10,0.5);
+  }
+
+  /* ── CANVAS ── */
+  #canvas-wrap {
+    position: relative;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 2px var(--gold),
+      0 0 40px rgba(200,134,10,0.2),
+      0 8px 40px rgba(0,0,0,0.6);
+  }
+
+  canvas {
+    display: block;
+    image-rendering: auto;
+  }
+
+  /* ── OVERLAY ── */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26,15,10,0.75);
+    backdrop-filter: blur(3px);
+    z-index: 20;
+    transition: opacity 0.3s;
+  }
+
+  #overlay.hidden {
+    display: none;
+  }
+
+  .ov-kamon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 12px rgba(200,134,10,0.6));
+    animation: floatKamon 3s ease-in-out infinite;
+  }
+
+  @keyframes floatKamon {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+
+  .ov-title {
+    font-family: 'Zen Antique', serif;
+    font-size: 1.8rem;
+    color: var(--sky1);
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 20px rgba(253,232,200,0.5);
+    margin-bottom: 4px;
+  }
+
+  .ov-sub {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 0.55rem;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+
+  .ov-score-block {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.65rem;
+    color: var(--sky1);
+    letter-spacing: 0.15em;
+    text-align: center;
+    margin-bottom: 20px;
+    line-height: 2;
+  }
+
+  .ov-score-block .big {
+    font-size: 2rem;
+    color: var(--gold);
+    display: block;
+    text-shadow: 0 0 16px rgba(200,134,10,0.7);
+  }
+
+  .ov-btn {
+    font-family: 'Zen Antique', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ov-btn::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(200,134,10,0.3);
+    pointer-events: none;
+  }
+
+  .ov-btn:hover {
+    background: var(--gold);
+    color: var(--ink);
+    box-shadow: 0 0 20px rgba(200,134,10,0.4);
+  }
+
+  .ov-instruction {
+    font-size: 0.5rem;
+    color: rgba(253,232,200,0.4);
+    letter-spacing: 0.2em;
+    margin-top: 12px;
+    font-weight: 300;
+  }
+
+  /* ── TAP BUTTON (mobile) ── */
+  #tap-zone {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 16px 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  #tap-btn {
+    font-family: 'Zen Antique', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    background: transparent;
+    border: 1px solid rgba(200,134,10,0.5);
+    color: var(--gold);
+    padding: 14px 48px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 300px;
+    transition: all 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #tap-btn:active {
+    background: rgba(200,134,10,0.15);
+    transform: scale(0.97);
+  }
+
+  /* Score popup animation */
+  @keyframes scorePopup {
+    0%   { opacity:1; transform: translateY(0) scale(1); }
+    100% { opacity:0; transform: translateY(-40px) scale(1.3); }
+  }
+
+  .score-popup {
+    position: absolute;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(200,134,10,0.8);
+    pointer-events: none;
+    animation: scorePopup 0.8s ease forwards;
+    z-index: 30;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    鳥
+    <span class="logo-sub">TORI · LUKSO ARCADE</span>
+  </div>
+  <div class="hud">
+    <div class="hud-item">
+      <span class="hud-label">得点</span>
+      <span class="hud-val" id="score-el">0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">最高</span>
+      <span class="hud-val" id="hi-el">0</span>
+    </div>
+  </div>
+</header>
+
+<div id="canvas-wrap">
+  <canvas id="game"></canvas>
+
+  <div id="overlay">
+    <div class="ov-kamon">🕊️</div>
+    <div class="ov-title">鳥</div>
+    <div class="ov-sub">TORI · LUKSO ARCADE</div>
+    <div class="ov-score-block" id="ov-score-block" style="display:none">
+      <span>PUNTUACIÓN</span>
+      <span class="big" id="ov-score">0</span>
+      <span id="ov-best"></span>
+    </div>
+    <button class="ov-btn" id="ov-btn" onclick="startGame()">始める · INICIAR</button>
+    <div class="ov-instruction" id="ov-inst">ESPACIO · CLIC · TOCA PARA VOLAR</div>
+  </div>
+</div>
+
+<div id="tap-zone">
+  <button id="tap-btn" ontouchstart="flap()" onmousedown="flap()">▲ VOLAR · 飛ぶ</button>
+</div>
+
+<script>
+// ============================================================
+// SETUP
+// ============================================================
+const canvas  = document.getElementById('game');
+const ctx     = canvas.getContext('2d');
+const wrap    = document.getElementById('canvas-wrap');
+
+// ============================================================
+// CONSTANTS (relative to canvas size)
+// ============================================================
+const GRAVITY    = 0.32;
+const FLAP_VEL   = -6.5;
+const PIPE_W     = () => canvas.width * 0.14;
+const PIPE_GAP   = () => canvas.height * 0.28;
+const PIPE_SPEED = () => canvas.width * 0.003 * (1 + Math.floor(score / 5) * 0.08);
+const BIRD_X     = () => canvas.width * 0.25;
+const BIRD_R     = () => canvas.width * 0.05;
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let state      = 'start';
+let score      = 0;
+let hiScore    = parseInt(localStorage.getItem('lukso_tori_hi') || '0');
+let bird       = {};
+let pipes      = [];
+let clouds     = [];
+let petals     = [];
+let frameCount = 0;
+let animId     = null;
+let deathTimer = 0;
+let flashTimer = 0;
+
+document.getElementById('hi-el').textContent = hiScore;
+
+// Responsive sizing
+function resize() {
+  const maxW = Math.min(window.innerWidth, 400);
+  const maxH = Math.min(window.innerHeight - 200, 480);
+  const W = maxW;
+  const H = Math.min(maxH, W * 1.4);
+  canvas.width  = W;
+  canvas.height = H;
+  wrap.style.width  = W + 'px';
+  wrap.style.height = H + 'px';
+}
+
+resize();
+window.addEventListener('resize', resize);
+
+
+
+// ============================================================
+// CLOUD & PETAL SYSTEMS
+// ============================================================
+function initClouds() {
+  clouds = [];
+  for (let i = 0; i < 5; i++) {
+    clouds.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.5,
+      w: 60 + Math.random() * 80,
+      h: 20 + Math.random() * 30,
+      speed: 0.2 + Math.random() * 0.3,
+      alpha: 0.4 + Math.random() * 0.4,
+    });
+  }
+}
+
+function initPetals() {
+  petals = [];
+  for (let i = 0; i < 18; i++) {
+    petals.push(spawnPetal());
+  }
+}
+
+function spawnPetal() {
+  return {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: 3 + Math.random() * 5,
+    speedX: -0.5 - Math.random() * 1.5,
+    speedY: 0.5 + Math.random() * 1,
+    rot: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.08,
+    alpha: 0.3 + Math.random() * 0.5,
+    hue: Math.random() > 0.5 ? '#e8a0b0' : '#f9d0a0',
+  };
+}
+
+// ============================================================
+// INIT GAME
+// ============================================================
+function initBird() {
+  bird = {
+    x: BIRD_X(),
+    y: canvas.height * 0.45,
+    vy: 0,
+    rot: 0,
+    alive: true,
+    wingAngle: 0,
+    wingDir: 1,
+    flapAnim: 0,  // 0-1, brief wing flap animation
+  };
+}
+
+function initPipes() {
+  pipes = [];
+}
+
+function startGame() {
+  score    = 0;
+  state    = 'playing';
+  deathTimer = 0;
+  flashTimer = 0;
+  document.getElementById('score-el').textContent = '0';
+  document.getElementById('overlay').classList.add('hidden');
+  initBird();
+  initPipes();
+  initClouds();
+  initPetals();
+  if (!animId) gameLoop();
+}
+
+// ============================================================
+// FLAP
+// ============================================================
+function flap() {
+  if (state === 'start' || state === 'dead') {
+    startGame();
+    return;
+  }
+  if (state !== 'playing' || !bird.alive) return;
+  bird.vy = FLAP_VEL;
+  bird.flapAnim = 1;
+}
+
+// ============================================================
+// SPAWN PIPES
+// ============================================================
+function spawnPipe() {
+  const W  = canvas.width;
+  const H  = canvas.height;
+  const gap = PIPE_GAP();
+  const pw  = PIPE_W();
+  const minTop = H * 0.12;
+  const maxTop = H - gap - H * 0.12;
+  const topH   = minTop + Math.random() * (maxTop - minTop);
+
+  pipes.push({
+    x:      W + pw,
+    topH,
+    botY:   topH + gap,
+    w:      pw,
+    passed: false,
+    // decorative: bamboo segment count
+    segments: Math.floor(topH / 40) + 1,
+  });
+}
+
+// ============================================================
+// UPDATE
+// ============================================================
+function update() {
+  frameCount++;
+
+  // Update clouds
+  clouds.forEach(c => {
+    c.x -= c.speed;
+    if (c.x + c.w < 0) {
+      c.x = canvas.width + 20;
+      c.y = Math.random() * canvas.height * 0.5;
+    }
+  });
+
+  // Update petals
+  petals.forEach(p => {
+    p.x   += p.speedX;
+    p.y   += p.speedY;
+    p.rot += p.rotSpeed;
+    if (p.x < -20 || p.y > canvas.height + 20) {
+      Object.assign(p, spawnPetal());
+      p.x = canvas.width + 10;
+      p.y = Math.random() * canvas.height;
+    }
+  });
+
+  if (state !== 'playing') return;
+
+  // Flash timer (death flash)
+  if (flashTimer > 0) flashTimer--;
+
+  // Death timer
+  if (deathTimer > 0) {
+    deathTimer--;
+    if (deathTimer === 0) showGameOver();
+    return;
+  }
+
+  // Bird physics
+  bird.vy    += GRAVITY;
+  bird.y     += bird.vy;
+  bird.rot    = Math.min(Math.max(bird.vy * 3.5, -30), 80) * Math.PI / 180;
+  bird.wingAngle += 0.15 * bird.wingDir;
+  if (Math.abs(bird.wingAngle) > 0.4) bird.wingDir *= -1;
+  if (bird.flapAnim > 0) bird.flapAnim -= 0.12;
+
+  // Floor/ceiling
+  if (bird.y + BIRD_R() > canvas.height || bird.y - BIRD_R() < 0) {
+    killBird();
+    return;
+  }
+
+  // Spawn pipes
+  const spawnInterval = Math.max(90, 140 - Math.floor(score / 3) * 5);
+  if (frameCount % spawnInterval === 0) spawnPipe();
+
+  // Update pipes
+  const speed = PIPE_SPEED();
+  pipes.forEach(p => {
+    p.x -= speed;
+
+    // Score
+    if (!p.passed && p.x + p.w < bird.x) {
+      p.passed = true;
+      score++;
+      document.getElementById('score-el').textContent = score;
+      if (score > hiScore) {
+        hiScore = score;
+        localStorage.setItem('lukso_tori_hi', hiScore);
+        document.getElementById('hi-el').textContent = hiScore;
+      }
+      showScorePopup();
+    }
+
+    // Collision
+    const bx = bird.x, by = bird.y, br = BIRD_R() * 0.75;
+    const hitTop = bx + br > p.x + 4 && bx - br < p.x + p.w - 4 && by - br < p.topH - 4;
+    const hitBot = bx + br > p.x + 4 && bx - br < p.x + p.w - 4 && by + br > p.botY + 4;
+
+    if (hitTop || hitBot) killBird();
+  });
+
+  // Remove off-screen pipes
+  pipes = pipes.filter(p => p.x + p.w > -10);
+}
+
+function killBird() {
+  if (!bird.alive) return;
+  bird.alive = false;
+  bird.vy    = -4;
+  flashTimer = 8;
+  deathTimer = 55;
+}
+
+function showGameOver() {
+  state = 'dead';
+  const ov = document.getElementById('overlay');
+  ov.classList.remove('hidden');
+
+  document.getElementById('ov-score-block').style.display = 'block';
+  document.getElementById('ov-score').textContent = score;
+  document.getElementById('ov-best').textContent  = `最高記録 · RÉCORD: ${hiScore}`;
+  document.getElementById('ov-btn').textContent   = '再び · REINICIAR';
+  document.getElementById('ov-inst').textContent  = 'ESPACIO · CLIC · TOCA PARA VOLAR';
+}
+
+function showScorePopup() {
+  const popup = document.createElement('div');
+  popup.className = 'score-popup';
+  popup.textContent = '+1';
+  popup.style.left  = (bird.x + 20) + 'px';
+  popup.style.top   = (bird.y - 30) + 'px';
+  wrap.appendChild(popup);
+  setTimeout(() => popup.remove(), 800);
+}
+
+// ============================================================
+// DRAW
+// ============================================================
+function drawSky() {
+  const H = canvas.height, W = canvas.width;
+
+  // Gradient sky — ukiyo-e sunrise
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0,   '#f0c9a0');
+  grad.addColorStop(0.3, '#f9d4a8');
+  grad.addColorStop(0.6, '#fde8c8');
+  grad.addColorStop(1,   '#f5e0c0');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Sun disc
+  const sunX = W * 0.75, sunY = H * 0.18;
+  const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 55);
+  sunGrad.addColorStop(0,   'rgba(255,240,180,0.95)');
+  sunGrad.addColorStop(0.5, 'rgba(240,180,80,0.6)');
+  sunGrad.addColorStop(1,   'rgba(240,150,60,0)');
+  ctx.fillStyle = sunGrad;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mountain silhouettes (distant)
+  ctx.fillStyle = 'rgba(180,130,100,0.18)';
+  ctx.beginPath();
+  ctx.moveTo(0, H * 0.6);
+  ctx.lineTo(W * 0.15, H * 0.35);
+  ctx.lineTo(W * 0.32, H * 0.55);
+  ctx.lineTo(W * 0.5,  H * 0.28);
+  ctx.lineTo(W * 0.68, H * 0.5);
+  ctx.lineTo(W * 0.85, H * 0.32);
+  ctx.lineTo(W,        H * 0.48);
+  ctx.lineTo(W, H * 0.65);
+  ctx.closePath();
+  ctx.fill();
+
+  // Water reflection at bottom
+  const waterGrad = ctx.createLinearGradient(0, H * 0.8, 0, H);
+  waterGrad.addColorStop(0, 'rgba(180,130,90,0.15)');
+  waterGrad.addColorStop(1, 'rgba(140,100,60,0.3)');
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(0, H * 0.82, W, H * 0.18);
+
+  // Ripple lines
+  ctx.strokeStyle = 'rgba(160,110,70,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    const y = H * 0.84 + i * (H * 0.025);
+    const offset = Math.sin(frameCount * 0.02 + i) * 3;
+    ctx.beginPath();
+    ctx.moveTo(0, y + offset);
+    for (let x = 0; x < W; x += 4) {
+      ctx.lineTo(x, y + Math.sin(x * 0.04 + frameCount * 0.02 + i) * 2 + offset);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawClouds() {
+  clouds.forEach(c => {
+    ctx.save();
+    ctx.globalAlpha = c.alpha;
+    ctx.fillStyle = 'rgba(255,248,240,0.9)';
+    // Soft cloud shape
+    ctx.beginPath();
+    ctx.ellipse(c.x,            c.y,            c.w * 0.5, c.h * 0.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(c.x + c.w*0.3,  c.y - c.h*0.2,  c.w * 0.3, c.h * 0.4, 0, 0, Math.PI * 2);
+    ctx.ellipse(c.x - c.w*0.25, c.y - c.h*0.1,  c.w * 0.25,c.h * 0.35,0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawPetals() {
+  petals.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.hue;
+    // Petal shape
+    ctx.beginPath();
+    ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawPipes() {
+  const H = canvas.height;
+  pipes.forEach(p => {
+    drawBamboo(p.x, 0, p.w, p.topH, true);
+    drawBamboo(p.x, p.botY, p.w, H - p.botY, false);
+  });
+}
+
+function drawBamboo(x, y, w, h, isTop) {
+  if (h <= 0) return;
+  const ctx2 = ctx;
+
+  // Main bamboo stalk gradient
+  const grad = ctx2.createLinearGradient(x, 0, x + w, 0);
+  grad.addColorStop(0,    '#3d6b34');
+  grad.addColorStop(0.3,  '#5a9e50');
+  grad.addColorStop(0.6,  '#4a8540');
+  grad.addColorStop(1,    '#2d5228');
+  ctx2.fillStyle = grad;
+  ctx2.fillRect(x, y, w, h);
+
+  // Bamboo segments (nodes)
+  const segH = 36;
+  ctx2.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx2.strokeStyle = '#2d5228';
+  ctx2.lineWidth = 2;
+
+  const startSeg = isTop ? h : 0;
+  const dir = isTop ? -1 : 1;
+
+  let sy = isTop ? y + h : y;
+  while (isTop ? sy > y : sy < y + h) {
+    // Node ring
+    ctx2.fillStyle = '#2d5228';
+    ctx2.fillRect(x - 2, sy - 2, w + 4, 5);
+    ctx2.fillStyle = '#4a8540';
+    ctx2.fillRect(x, sy + 2, w, 2);
+    sy += dir * segH;
+  }
+
+  // Highlight stripe
+  ctx2.fillStyle = 'rgba(150,220,130,0.2)';
+  ctx2.fillRect(x + w * 0.15, y, w * 0.12, h);
+
+  // Cap at the opening
+  ctx2.fillStyle = '#2d5228';
+  if (isTop) {
+    ctx2.fillRect(x - 3, y + h - 4, w + 6, 6);
+    // Leaf sprigs at bottom of top pipe
+    drawLeaf(x - 8,  y + h - 10, -0.5);
+    drawLeaf(x + w,  y + h - 14,  0.6);
+  } else {
+    ctx2.fillRect(x - 3, y, w + 6, 6);
+    drawLeaf(x - 10, y + 8, -0.8);
+    drawLeaf(x + w + 2, y + 6, 0.4);
+  }
+}
+
+function drawLeaf(x, y, angle) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = '#4a8540';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 18, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#3d6b34';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-14, 0);
+  ctx.lineTo(14, 0);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBird() {
+  if (!bird.alive && flashTimer > 0 && Math.floor(flashTimer / 2) % 2 === 0) return;
+
+  const bx = bird.x, by = bird.y;
+  const r  = BIRD_R();
+  const flapIntensity = Math.max(bird.flapAnim, Math.abs(bird.wingAngle));
+
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(bird.rot);
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(2, r * 0.8, r * 0.7, r * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail feathers
+  ctx.fillStyle = '#d4c8f0';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.6, 0);
+  ctx.lineTo(-r * 1.5, -r * 0.3);
+  ctx.lineTo(-r * 1.3, r * 0.1);
+  ctx.lineTo(-r * 1.6, r * 0.4);
+  ctx.lineTo(-r * 0.8, r * 0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Wings
+  const wingUp = -flapIntensity * r * 1.2;
+  ctx.fillStyle = '#c8b8e8';
+  // Left wing (top)
+  ctx.save();
+  ctx.translate(0, 0);
+  ctx.rotate(-0.3 - flapIntensity * 0.8);
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.2, -r * 0.1, r * 1.1, r * 0.35, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Right wing (bottom, slightly offset)
+  ctx.fillStyle = '#b8a8d8';
+  ctx.save();
+  ctx.rotate(0.2 + flapIntensity * 0.4);
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.1, r * 0.15, r * 0.95, r * 0.28, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Body — white crane
+  const bodyGrad = ctx.createRadialGradient(-r * 0.1, -r * 0.1, 0, 0, 0, r);
+  bodyGrad.addColorStop(0, '#ffffff');
+  bodyGrad.addColorStop(0.7, '#f0ece8');
+  bodyGrad.addColorStop(1, '#ddd8d0');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r, r * 0.75, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Red crown (crane marking)
+  ctx.fillStyle = '#8b1a1a';
+  ctx.beginPath();
+  ctx.ellipse(r * 0.4, -r * 0.55, r * 0.22, r * 0.14, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye
+  ctx.fillStyle = '#1a0f0a';
+  ctx.beginPath();
+  ctx.arc(r * 0.5, -r * 0.2, r * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(r * 0.53, -r * 0.23, r * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Beak
+  ctx.fillStyle = '#c8860a';
+  ctx.beginPath();
+  ctx.moveTo(r * 0.65, -r * 0.12);
+  ctx.lineTo(r * 1.25, -r * 0.08);
+  ctx.lineTo(r * 0.65,  r * 0.04);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawFloor() {
+  const H = canvas.height, W = canvas.width;
+  // Ground strip
+  const gGrad = ctx.createLinearGradient(0, H * 0.82, 0, H);
+  gGrad.addColorStop(0, '#c8a070');
+  gGrad.addColorStop(1, '#a07850');
+  ctx.fillStyle = gGrad;
+  ctx.fillRect(0, H * 0.82, W, H * 0.18);
+
+  // Grass tufts
+  ctx.strokeStyle = '#6a9a50';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < W; i += 12) {
+    const hgt = 5 + Math.sin(i * 0.3) * 3;
+    const gx  = i + Math.sin(frameCount * 0.02 + i) * 1.5;
+    ctx.beginPath();
+    ctx.moveTo(gx, H * 0.82);
+    ctx.quadraticCurveTo(gx + 3, H * 0.82 - hgt, gx + 6, H * 0.82 - hgt * 0.3);
+    ctx.stroke();
+  }
+}
+
+function drawDeathBird() {
+  // Bird falling after death
+  if (!bird.alive && deathTimer > 0) {
+    bird.vy += GRAVITY;
+    bird.y  += bird.vy;
+    bird.rot = Math.PI * 0.6; // tumbling
+    drawBird();
+  }
+}
+
+// Static scene for start screen
+function drawStatic() {
+  const W = canvas.width, H = canvas.height;
+  drawSky();
+  drawClouds();
+  drawPetals();
+  drawFloor();
+}
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+function gameLoop() {
+  update();
+
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Flash on death
+  if (flashTimer > 6) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    drawSky();
+    drawClouds();
+    drawPetals();
+    drawPipes();
+    drawFloor();
+
+    if (bird.alive) {
+      drawBird();
+    } else {
+      drawDeathBird();
+    }
+  }
+
+  animId = requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w') {
+    e.preventDefault();
+    flap();
+  }
+});
+
+canvas.addEventListener('mousedown', flap);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); flap(); }, { passive: false });
+
+// ============================================================
+// INIT
+// ============================================================
+initClouds();
+initPetals();
+gameLoop();
+</script>
+</body>
+</html>
